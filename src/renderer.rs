@@ -17,7 +17,7 @@ impl Renderer {
     pub fn new(gl: glow::Context, imgui: &mut imgui::Context) -> Self {
         Self {
             glow_renderer: AutoRenderer::new(gl, imgui).unwrap(),
-            tab1: Tab1 { settings: Settings {  full_disk_scan: true, gorilla_tag_path: Default::default(), bepinex_path: Default::default(), scan_results: Vec::new() } },
+            tab1: Tab1::new(),
             tab2: Tab2,
             settings: RefCell::new(Settings { full_disk_scan: true ,gorilla_tag_path: Default::default(), bepinex_path: Default::default(), scan_results: Vec::new() }),
         }

@@ -35,7 +35,7 @@ struct App {
 
 impl ApplicationHandler for App {
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
-        let window_attributes = WindowAttributes::default().with_title("imgui-rs glow example");
+        let window_attributes = WindowAttributes::default().with_title("Cheat Scan");
         let template = ConfigTemplateBuilder::new();
         let display_builder = DisplayBuilder::new().with_window_attributes(Some(window_attributes));
 
