@@ -8,7 +8,7 @@ use crate::Structs::Settings;
 
 pub struct Renderer {
     glow_renderer: AutoRenderer,
-    tab1: Tab1,
+    tab1: RefCell<Tab1>,
     tab2: Tab2,
     settings: RefCell<Settings>,
 }
@@ -17,7 +17,7 @@ impl Renderer {
     pub fn new(gl: glow::Context, imgui: &mut imgui::Context) -> Self {
         Self {
             glow_renderer: AutoRenderer::new(gl, imgui).unwrap(),
-            tab1: Tab1::new(),
+            tab1: RefCell::new(Tab1::new()),
             tab2: Tab2,
             settings: RefCell::new(Settings { full_disk_scan: true ,gorilla_tag_path: Default::default(), bepinex_path: Default::default(), scan_results: Vec::new() }),
         }
@@ -30,7 +30,7 @@ impl Renderer {
             .build(|| {
                 if let Some(tab_bar) = ui.tab_bar("MainTabBar") {
                     if let Some(tab) = ui.tab_item("Main") {
-                        self.tab1.build(ui, &mut settings);
+                        self.tab1.borrow_mut().build(ui, &mut settings);
                         tab.end();
                     }
                     if let Some(tab) = ui.tab_item("Settings") {

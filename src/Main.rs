@@ -8,6 +8,7 @@ pub struct Tab1 {
     // Persistent progress tracker
     pub progress: std::sync::Arc<std::sync::Mutex<f32>>,
     pub is_scanning: std::sync::Arc<std::sync::Mutex<bool>>,
+    pub warning_message: Option<String>,
 }
 
 impl Tab1 {
@@ -16,10 +17,11 @@ impl Tab1 {
             receiver: std::sync::Arc::new(std::sync::Mutex::new(None)),
             progress: std::sync::Arc::new(std::sync::Mutex::new(0.0)),
             is_scanning: std::sync::Arc::new(std::sync::Mutex::new(false)),
+            warning_message: None,
         }
     }
 
-    pub fn build(&self, ui: &Ui, settings: &mut Settings) {
+    pub fn build(&mut self, ui: &Ui, settings: &mut Settings) {
         ui.text("Welcome to CheatScan made by Moonaw!");
 
         // Poll for results
@@ -34,23 +36,33 @@ impl Tab1 {
         }
 
         if ui.button("Begin scanning") {
-            let bepinex_path = settings.bepinex_path.clone();
-            let full_disk = settings.full_disk_scan;
-            let (tx, rx) = channel();
-            let progress = self.progress.clone();
+            let bepinex_path = std::path::Path::new(&settings.bepinex_path);
+            if !settings.full_disk_scan && (!bepinex_path.exists() || !bepinex_path.is_dir()) {
+                self.warning_message = Some("Please enable Full Disk Scan or select a valid BepInEx/Gorilla Tag path.".to_string());
+            } else {
+                self.warning_message = None;
+                let bepinex_path_str = settings.bepinex_path.clone();
+                let full_disk = settings.full_disk_scan;
+                let (tx, rx) = channel();
+                let progress = self.progress.clone();
 
-            if let Ok(mut rx_guard) = self.receiver.lock() {
-                *rx_guard = Some(rx);
-            }
-            if let Ok(mut s) = self.is_scanning.lock() { 
-                *s = true; 
-                if let Ok(mut p) = self.progress.lock() { *p = 0.0; }
-            }
+                if let Ok(mut rx_guard) = self.receiver.lock() {
+                    *rx_guard = Some(rx);
+                }
+                if let Ok(mut s) = self.is_scanning.lock() { 
+                    *s = true; 
+                    if let Ok(mut p) = self.progress.lock() { *p = 0.0; }
+                }
 
-            std::thread::spawn(move || {
-                let results = find_suspicious_dlls(&bepinex_path.to_string_lossy(), full_disk, progress);
-                let _ = tx.send(results);
-            });
+                std::thread::spawn(move || {
+                    let results = find_suspicious_dlls(&bepinex_path_str.to_string_lossy(), full_disk, progress);
+                    let _ = tx.send(results);
+                });
+            }
+        }
+
+        if let Some(ref msg) = self.warning_message {
+            ui.text_colored([1.0, 0.0, 0.0, 1.0], msg);
         }
 
         if let Ok(s) = self.is_scanning.lock() {
