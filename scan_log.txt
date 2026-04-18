@@ -1,0 +1,40 @@
+warning: variant `Safe` is never constructed
+ --> src/ImportanceEnum.rs:5:5
+  |
+4 | pub enum ImportanceEnum {
+  |          -------------- variant in this enum
+5 |     Safe,
+  |     ^^^^
+  |
+  = note: `ImportanceEnum` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+  = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: module `Main` should have a snake case name
+ --> src/main.rs:2:5
+  |
+2 | mod Main;
+  |     ^^^^ help: convert the identifier to snake case: `main`
+  |
+  = note: `#[warn(non_snake_case)]` (part of `#[warn(nonstandard_style)]`) on by default
+
+warning: module `Settings` should have a snake case name
+ --> src/main.rs:3:5
+  |
+3 | mod Settings;
+  |     ^^^^^^^^ help: convert the identifier to snake case (notice the capitalization): `settings`
+
+warning: module `Structs` should have a snake case name
+ --> src/main.rs:4:5
+  |
+4 | mod Structs;
+  |     ^^^^^^^ help: convert the identifier to snake case (notice the capitalization): `structs`
+
+warning: module `ImportanceEnum` should have a snake case name
+ --> src/main.rs:7:5
+  |
+7 | mod ImportanceEnum;
+  |     ^^^^^^^^^^^^^^ help: convert the identifier to snake case: `importance_enum`
+
+warning: `CheatScan` (bin "CheatScan") generated 5 warnings
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.13s
+     Running `target/debug/CheatScan '/home/moonaw/.steam/root/steamapps/common/Gorilla Tag/BepInEx/plugins/'`
