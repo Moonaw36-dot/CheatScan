@@ -5,6 +5,25 @@ use pelite::pe32::{Pe as Pe32};
 use pelite::pe64::{Pe as Pe64};
 use crate::ImportanceEnum::ImportanceEnum;
 use crate::Structs::ScanResult;
+use sha2::{Sha256, Digest};
+use std::collections::HashSet;
+use std::fs::File;
+use std::io::{Read, BufReader};
+
+fn get_file_hash(path: &std::path::Path) -> String {
+    let file = File::open(path).ok();
+    if let Some(file) = file {
+        let mut reader = BufReader::new(file);
+        let mut hasher = Sha256::new();
+        let mut buffer = [0u8; 8192];
+        while let Ok(count) = reader.read(&mut buffer) {
+            if count == 0 { break; }
+            hasher.update(&buffer[..count]);
+        }
+        return hex::encode(hasher.finalize());
+    }
+    String::new()
+}
 
 fn get_original_filename(path: &std::path::Path) -> Option<String> {
     let map = FileMap::open(path).ok()?;
@@ -34,17 +53,29 @@ fn get_original_filename(path: &std::path::Path) -> Option<String> {
     original_filename
 }
 
-pub fn find_suspicious_dlls(plugins_path: &str) -> Vec<ScanResult> {
-    let suspicious_names = [
-        "ii's Stupid Menu.dll", "ColossalCheatMenu", "CCM", "Slider", "Preds", "WallWalk",
+pub fn find_suspicious_dlls(plugins_path: &str, full_disk: bool) -> Vec<ScanResult> {
+    let all_suspicious = [
+        "iis_Stupid_Menu", "ColossalCheatMenu", "CCM", "Slider", "Preds", "WallWalk",
         "ModMenu", "CheatMenu", "Skid", "Pull", "PSA", "Malachis", "Mod Menu",
         "Cheat Menu", "Comp Gui", "Comp Cheat", "arms", "Zybers", "Speed Boost",
         "Boost", "Quest Menu", "Fake Quest", "Pigeito", "LongArms", "Tag Reach",
         "Tag fix", "Ventern", "Goobas", "Mintys", "Velmax", "Velocity",
         "Seralyth", "Soduim", "Spoofer", "pull cap", "Comp ", "external", "Predictions",
+        "wyvldr", "5cintill4", "inject", "cheat", "hack", "sharpmono", "bypass", "smi",
+        "trainer", "loader", "injector", "parallex", "extremeinjector", "scintilla",
+        "intellect"
     ];
 
+    let safe_hashes: HashSet<String> = HashSet::new();
+
     let mut paths_to_scan = vec![plugins_path.to_string()];
+    
+    if full_disk {
+        #[cfg(target_os = "windows")]
+        paths_to_scan.push("C:\\".to_string());
+        #[cfg(not(target_os = "windows"))]
+        paths_to_scan.push("/".to_string());
+    }
 
     #[cfg(target_os = "windows")]
     {
@@ -68,28 +99,37 @@ pub fn find_suspicious_dlls(plugins_path: &str) -> Vec<ScanResult> {
                 let path = entry.path();
                 let file_name = entry.file_name().to_string_lossy();
                 let is_dll = file_name.ends_with(".dll");
+                let is_exe = file_name.ends_with(".exe");
 
-                if is_plugins_folder && !is_dll && entry.file_type().is_file() {
+                if is_plugins_folder && !is_dll && !is_exe && entry.file_type().is_file() {
                     found_files.push(ScanResult {
                         file_name: file_name.to_string(),
                         importance: ImportanceEnum::Suspicious,
                     });
                 }
-                
-                if is_dll {
+
+                if is_dll || is_exe {
                     let mut is_suspicious = false;
 
                     // 1. Check filename
-                    if suspicious_names.iter().any(|&name| file_name.contains(name)) {
+                    if all_suspicious.iter().any(|&name| file_name.contains(name)) {
                         is_suspicious = true;
                     }
 
                     // 2. Check metadata
                     if !is_suspicious {
                         if let Some(check_name) = get_original_filename(path) {
-                            if suspicious_names.iter().any(|&name| check_name.contains(name)) {
+                            if all_suspicious.iter().any(|&name| check_name.contains(name)) {
                                 is_suspicious = true;
                             }
+                        }
+                    }
+
+                    // 3. Only hash if suspicious to check against allowlist
+                    if is_suspicious {
+                        let file_hash = get_file_hash(path);
+                        if safe_hashes.contains(&file_hash) {
+                            is_suspicious = false;
                         }
                     }
 

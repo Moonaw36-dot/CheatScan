@@ -13,7 +13,7 @@ impl Tab1 {
         ui.text("WARNING! While scanning, it might slow down your pc, since it is scanning your whole drive for cheats.");
 
         if ui.button("Begin scanning") {
-            settings.scan_results = find_suspicious_dlls(settings.bepinex_path.to_str().unwrap_or(""));
+            settings.scan_results = find_suspicious_dlls(settings.bepinex_path.to_str().unwrap_or(""), settings.full_disk_scan);
         }
 
         if settings.scan_results.is_empty() {
