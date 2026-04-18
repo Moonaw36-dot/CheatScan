@@ -64,7 +64,7 @@ pub fn find_suspicious_dlls(plugins_path: &str, full_disk: bool, progress: Arc<M
         "Seralyth", "Soduim", "Spoofer", "pull cap", "Comp ", "external", "Predictions",
         "wyvldr", "5cintill4", "inject", "cheat", "hack", "sharpmono", "bypass", "smi",
         "trainer", "loader", "injector", "parallex", "extremeinjector", "scintilla",
-        "intellect"
+        "intellect", "IntellectFree"
     ];
 
     let safe_hashes: HashSet<String> = [
@@ -89,7 +89,8 @@ pub fn find_suspicious_dlls(plugins_path: &str, full_disk: bool, progress: Arc<M
     ].into_iter().map(String::from).collect();
 
     let malicious_hashes: HashSet<String> = [
-        "ea0df233a20070c7aeec60bfb8b9ce0c42ac809640b5da68ccf7619656a35e9e"
+        "ea0df233a20070c7aeec60bfb8b9ce0c42ac809640b5da68ccf7619656a35e9e",
+        "7a7261eae09358decff8653ebda60fa87bb98d6672d2bff422d1c2143cc34b8c"
     ].into_iter().map(String::from).collect();
 
     let mut paths_to_scan = vec![plugins_path.to_string()];
