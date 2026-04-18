@@ -1,5 +1,4 @@
 use imgui::Ui;
-use walkdir::WalkDir;
 use crate::Structs::Settings;
 use crate::files::{exe_dialog, find_bepinex_path, find_gorilla_tag_path, folder_dialog};
 

@@ -1,6 +1,5 @@
 use imgui::Ui;
 use crate::Structs::Settings;
-use crate::checker;
 use crate::checker::find_suspicious_dlls;
 
 pub struct Tab1 {
