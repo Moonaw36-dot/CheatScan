@@ -151,14 +151,16 @@ pub fn find_suspicious_dlls(plugins_path: &str, full_disk: bool, progress: Arc<M
                     }
                     
                     // 3. Check filename
-                    if !is_suspicious && all_suspicious.iter().any(|&name| file_name.contains(name)) {
+                    let normalized_file_name = file_name.to_lowercase().replace(" ", "");
+                    if !is_suspicious && all_suspicious.iter().any(|&name| normalized_file_name.contains(&name.to_lowercase().replace(" ", ""))) {
                         is_suspicious = true;
                     }
 
                     // 4. Check metadata
                     if !is_suspicious {
                         if let Some(check_name) = get_original_filename(&path) {
-                            if all_suspicious.iter().any(|&name| check_name.contains(name)) {
+                            let normalized_check_name = check_name.to_lowercase().replace(" ", "");
+                            if all_suspicious.iter().any(|&name| normalized_check_name.contains(&name.to_lowercase().replace(" ", ""))) {
                                 is_suspicious = true;
                             }
                         }
