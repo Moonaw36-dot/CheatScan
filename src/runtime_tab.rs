@@ -9,6 +9,8 @@ impl Tab3 {
         Tab3 {}
     }
     pub fn build(&mut self, ui: &Ui, settings: &mut Settings) {
+        ui.text("This check is REALLY basic and only checks the process name.");
+        ui.text("It will not detect it if the user has hide process enabled.");
         if ui.button("Check for Intellect") {
             if check_intellect() {
                 settings.is_intellect_running = Some(true);
