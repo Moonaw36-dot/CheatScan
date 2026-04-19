@@ -27,6 +27,7 @@ impl Renderer {
                 gorilla_tag_path: Default::default(),
                 bepinex_path: Default::default(),
                 scan_results: Vec::new(),
+                is_intellect_running: None
             }),
         }
     }

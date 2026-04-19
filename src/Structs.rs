@@ -11,4 +11,5 @@ pub struct Settings {
     pub gorilla_tag_path: PathBuf,
     pub bepinex_path: PathBuf,
     pub scan_results: Vec<ScanResult>,
+    pub is_intellect_running: Option<bool>,
 }

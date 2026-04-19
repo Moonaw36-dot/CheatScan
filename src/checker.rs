@@ -10,6 +10,7 @@ use std::collections::HashSet;
 use std::fs::File;
 use std::io::{BufReader, Read};
 use std::sync::{Arc, Mutex};
+use sysinfo::{ProcessRefreshKind, ProcessesToUpdate, RefreshKind, System};
 
 fn get_file_hash(path: &std::path::Path) -> String {
     let file = File::open(path).ok();
@@ -248,4 +249,24 @@ pub fn find_suspicious_dlls(
     }
 
     results
+}
+
+pub fn check_intellect() -> bool {
+   
+    let mut sys = System::new_with_specifics(
+        RefreshKind::nothing().with_processes(ProcessRefreshKind::everything())
+    );
+
+    
+    sys.refresh_processes(ProcessesToUpdate::All, true);
+
+    let intellect_process = "apphost";
+
+   
+    sys.processes().values().any(|val| {
+        val.name()
+            .to_str()
+            .map(|s| s.to_lowercase().contains(intellect_process))
+            .unwrap_or(false)
+    })
 }
