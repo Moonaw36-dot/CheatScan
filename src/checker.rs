@@ -180,14 +180,13 @@ pub fn find_suspicious_dlls(
         .into_par_iter()
         .flat_map(|path| {
             let mut found_files = Vec::new();
-            let _is_plugins_folder = path == plugins_path;
 
             if !path.is_empty() && std::path::Path::new(&path).exists() {
                 let entries: Vec<_> = WalkDir::new(path)
                     .into_iter()
                     .filter_map(|e| e.ok())
                     .collect();
-                let total_entries = entries.len();
+                let total_entries = entries.len().max(1);
 
                 for (i, entry) in entries.into_iter().enumerate() {
                     if i % 100 == 0 {
@@ -217,8 +216,11 @@ pub fn find_suspicious_dlls(
                         }
 
                         // 3. Check filename
+                        let normalized_file_name = file_name.to_lowercase().replace(" ", "");
                         if !is_suspicious
-                            && all_suspicious.iter().any(|&name| file_name.contains(name))
+                            && all_suspicious.iter().any(|&name| {
+                                normalized_file_name.contains(&name.to_lowercase().replace(" ", ""))
+                            })
                         {
                             is_suspicious = true;
                         }
@@ -226,7 +228,11 @@ pub fn find_suspicious_dlls(
                         // 4. Check metadata
                         if !is_suspicious {
                             if let Some(check_name) = get_original_filename(&path) {
-                                if all_suspicious.iter().any(|&name| check_name.contains(name)) {
+                                let normalized_check_name = check_name.to_lowercase().replace(" ", "");
+                                if all_suspicious.iter().any(|&name| {
+                                    normalized_check_name
+                                        .contains(&name.to_lowercase().replace(" ", ""))
+                                }) {
                                     is_suspicious = true;
                                 }
                             }
