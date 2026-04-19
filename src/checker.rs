@@ -65,6 +65,7 @@ pub fn find_suspicious_dlls(
     progress: Arc<Mutex<f32>>,
 ) -> Vec<ScanResult> {
     let all_suspicious = [
+        "apphost",
         "iis_Stupid_Menu",
         "ColossalCheatMenu",
         "CCM",
@@ -146,8 +147,9 @@ pub fn find_suspicious_dlls(
     .collect();
 
     let malicious_hashes: HashSet<String> = [
-        "ea0df233a20070c7aeec60bfb8b9ce0c42ac809640b5da68ccf7619656a35e9e",
-        "7a7261eae09358decff8653ebda60fa87bb98d6672d2bff422d1c2143cc34b8c",
+        "ea0df233a20070c7aeec60bfb8b9ce0c42ac809640b5da68ccf7619656a35e9e", // original intellect loader
+        "7a7261eae09358decff8653ebda60fa87bb98d6672d2bff422d1c2143cc34b8c", // Intellect lite
+        "1b8021fdd9ead2bee2bb706793bbd47cc7a74816b8b533ca5d78b6d69ffbaf2f" // apphost.exe
     ]
     .into_iter()
     .map(String::from)
@@ -252,17 +254,17 @@ pub fn find_suspicious_dlls(
 }
 
 pub fn check_intellect() -> bool {
-   
+
     let mut sys = System::new_with_specifics(
         RefreshKind::nothing().with_processes(ProcessRefreshKind::everything())
     );
 
-    
+
     sys.refresh_processes(ProcessesToUpdate::All, true);
 
     let intellect_process = "apphost";
 
-   
+
     sys.processes().values().any(|val| {
         val.name()
             .to_str()
