@@ -5,6 +5,7 @@ mod Structs;
 mod checker;
 mod files;
 mod renderer;
+mod runtime_scanner;
 mod runtime_tab;
 
 use crate::renderer::Renderer;
@@ -152,14 +153,6 @@ impl ApplicationHandler for App {
 }
 
 fn main() {
-    let _settings = Structs::Settings {
-        full_disk_scan: true,
-        gorilla_tag_path: Default::default(),
-        bepinex_path: Default::default(),
-        scan_results: Vec::new(),
-        is_intellect_running: None
-    };
-
     let event_loop = EventLoop::new().unwrap();
     let mut imgui = Context::create();
     let platform = WinitPlatform::new(&mut imgui);

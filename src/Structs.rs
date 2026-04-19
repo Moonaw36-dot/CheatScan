@@ -6,10 +6,24 @@ pub struct ScanResult {
     pub importance: ImportanceEnum,
 }
 
+pub struct RuntimeFinding {
+    pub method: String,
+    pub details: String,
+    pub pid: Option<u32>,
+    pub visible_in_process_list: bool,
+}
+
+pub struct RuntimeScanReport {
+    pub target_process: String,
+    pub detected: bool,
+    pub findings: Vec<RuntimeFinding>,
+    pub notes: Vec<String>,
+}
+
 pub struct Settings {
     pub full_disk_scan: bool,
     pub gorilla_tag_path: PathBuf,
     pub bepinex_path: PathBuf,
     pub scan_results: Vec<ScanResult>,
-    pub is_intellect_running: Option<bool>,
+    pub runtime_scan_report: Option<RuntimeScanReport>,
 }
