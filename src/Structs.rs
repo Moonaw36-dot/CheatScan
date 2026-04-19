@@ -1,5 +1,5 @@
-use std::path::PathBuf;
 use crate::ImportanceEnum::ImportanceEnum;
+use std::path::PathBuf;
 
 pub struct ScanResult {
     pub file_name: String,

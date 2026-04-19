@@ -1,6 +1,6 @@
+use crate::Structs::Settings;
 use std::path::PathBuf;
 use walkdir::WalkDir;
-use crate::Structs::Settings;
 
 pub fn exe_dialog() -> Option<PathBuf> {
     let path = rfd::FileDialog::new()
@@ -12,8 +12,7 @@ pub fn exe_dialog() -> Option<PathBuf> {
 }
 
 pub fn folder_dialog() -> Option<PathBuf> {
-    let path = rfd::FileDialog::new()
-        .pick_folder();
+    let path = rfd::FileDialog::new().pick_folder();
 
     Some(path?)
 }
@@ -35,7 +34,6 @@ pub fn find_gorilla_tag_path() -> Option<PathBuf> {
     None
 }
 
-
 pub fn find_bepinex_path(settings: &mut Settings) -> Option<PathBuf> {
     if settings.gorilla_tag_path.is_dir() {
         for entry in WalkDir::new(&settings.gorilla_tag_path)
@@ -43,7 +41,9 @@ pub fn find_bepinex_path(settings: &mut Settings) -> Option<PathBuf> {
             .into_iter()
             .filter_map(|e| e.ok())
         {
-            if entry.file_name().to_string_lossy().to_lowercase() == "bepinex" && entry.file_type().is_dir() {
+            if entry.file_name().to_string_lossy().to_lowercase() == "bepinex"
+                && entry.file_type().is_dir()
+            {
                 return Some(entry.path().to_path_buf());
             }
         }

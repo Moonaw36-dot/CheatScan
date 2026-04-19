@@ -1,15 +1,17 @@
-use glow::HasContext;
-use imgui::{Ui};
-use imgui_glow_renderer::AutoRenderer;
-use std::cell::RefCell;
 use crate::Main::Tab1;
 use crate::Settings::Tab2;
 use crate::Structs::Settings;
+use crate::runtime_tab::Tab3;
+use glow::HasContext;
+use imgui::Ui;
+use imgui_glow_renderer::AutoRenderer;
+use std::cell::RefCell;
 
 pub struct Renderer {
     glow_renderer: AutoRenderer,
     tab1: RefCell<Tab1>,
     tab2: Tab2,
+    tab3: RefCell<Tab3>,
     settings: RefCell<Settings>,
 }
 
@@ -19,7 +21,13 @@ impl Renderer {
             glow_renderer: AutoRenderer::new(gl, imgui).unwrap(),
             tab1: RefCell::new(Tab1::new()),
             tab2: Tab2,
-            settings: RefCell::new(Settings { full_disk_scan: true ,gorilla_tag_path: Default::default(), bepinex_path: Default::default(), scan_results: Vec::new() }),
+            tab3: RefCell::new(Tab3::new()),
+            settings: RefCell::new(Settings {
+                full_disk_scan: true,
+                gorilla_tag_path: Default::default(),
+                bepinex_path: Default::default(),
+                scan_results: Vec::new(),
+            }),
         }
     }
 
@@ -37,11 +45,14 @@ impl Renderer {
                         self.tab2.build(ui, &mut settings);
                         tab.end();
                     }
+                    if let Some(tab) = ui.tab_item("Runtime checker") {
+                        self.tab3.borrow_mut().build(ui, &mut settings);
+                        tab.end();
+                    }
                     tab_bar.end();
                 }
             });
     }
-
 
     pub fn render(&mut self, draw_data: &imgui::DrawData, width: u32, height: u32) {
         let gl = self.glow_renderer.gl_context();
@@ -50,7 +61,8 @@ impl Renderer {
             gl.clear_color(0.1, 0.1, 0.1, 1.0);
             gl.clear(glow::COLOR_BUFFER_BIT);
         }
-        self.glow_renderer.render(draw_data).expect("Glow renderer failed");
+        self.glow_renderer
+            .render(draw_data)
+            .expect("Glow renderer failed");
     }
 }
-

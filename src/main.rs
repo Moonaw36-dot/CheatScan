@@ -1,11 +1,13 @@
-mod renderer;
+mod ImportanceEnum;
 mod Main;
 mod Settings;
 mod Structs;
-mod files;
 mod checker;
-mod ImportanceEnum;
+mod files;
+mod renderer;
+mod runtime_tab;
 
+use crate::renderer::Renderer;
 use glutin::config::{ConfigTemplateBuilder, GlConfig};
 use glutin::context::{ContextAttributesBuilder, NotCurrentGlContext};
 use glutin::display::{GetGlDisplay, GlDisplay};
@@ -18,10 +20,8 @@ use std::time::Instant;
 use winit::application::ApplicationHandler;
 use winit::event::{Event, WindowEvent};
 use winit::event_loop::{ActiveEventLoop, EventLoop};
-use winit::window::{Window, WindowAttributes};
 use winit::raw_window_handle::HasWindowHandle;
-use crate::renderer::Renderer;
-
+use winit::window::{Window, WindowAttributes};
 
 struct App {
     window: Option<Window>,
@@ -41,9 +41,15 @@ impl ApplicationHandler for App {
 
         let (window, gl_config) = display_builder
             .build(event_loop, template, |configs| {
-                configs.reduce(|accum, config| {
-                    if config.num_samples() > accum.num_samples() { config } else { accum }
-                }).unwrap()
+                configs
+                    .reduce(|accum, config| {
+                        if config.num_samples() > accum.num_samples() {
+                            config
+                        } else {
+                            accum
+                        }
+                    })
+                    .unwrap()
             })
             .unwrap();
 
@@ -53,7 +59,9 @@ impl ApplicationHandler for App {
 
         let context_attributes = ContextAttributesBuilder::new().build(Some(raw_window_handle));
         let not_current_gl_context = unsafe {
-            gl_display.create_context(&gl_config, &context_attributes).unwrap()
+            gl_display
+                .create_context(&gl_config, &context_attributes)
+                .unwrap()
         };
 
         let attrs = SurfaceAttributesBuilder::<WindowSurface>::new().build(
@@ -62,7 +70,9 @@ impl ApplicationHandler for App {
             NonZeroU32::new(window.inner_size().height).unwrap(),
         );
         let gl_surface = unsafe {
-            gl_display.create_window_surface(&gl_config, &attrs).unwrap()
+            gl_display
+                .create_window_surface(&gl_config, &attrs)
+                .unwrap()
         };
         let gl_context = not_current_gl_context.make_current(&gl_surface).unwrap();
 
@@ -73,7 +83,8 @@ impl ApplicationHandler for App {
             })
         };
 
-        self.platform.attach_window(self.imgui.io_mut(), &window, HiDpiMode::Default);
+        self.platform
+            .attach_window(self.imgui.io_mut(), &window, HiDpiMode::Default);
         let renderer = Renderer::new(gl, &mut self.imgui);
 
         self.window = Some(window);
@@ -83,7 +94,12 @@ impl ApplicationHandler for App {
         self.last_frame = Instant::now();
     }
 
-    fn window_event(&mut self, event_loop: &ActiveEventLoop, _id: winit::window::WindowId, event: WindowEvent) {
+    fn window_event(
+        &mut self,
+        event_loop: &ActiveEventLoop,
+        _id: winit::window::WindowId,
+        event: WindowEvent,
+    ) {
         let window = self.window.as_ref().unwrap();
 
         match event {
@@ -102,16 +118,34 @@ impl ApplicationHandler for App {
                     self.platform.prepare_render(ui, window);
                     self.imgui.render()
                 };
-                
+
                 let size = window.inner_size();
-                if size.width > 0 && size.height > 0 && draw_data.total_vtx_count > 0 && draw_data.total_idx_count > 0 {
-                    self.renderer.as_mut().unwrap().render(draw_data, size.width, size.height);
-                    self.gl_surface.as_ref().unwrap().swap_buffers(self.gl_context.as_ref().unwrap()).unwrap();
+                if size.width > 0
+                    && size.height > 0
+                    && draw_data.total_vtx_count > 0
+                    && draw_data.total_idx_count > 0
+                {
+                    self.renderer
+                        .as_mut()
+                        .unwrap()
+                        .render(draw_data, size.width, size.height);
+                    self.gl_surface
+                        .as_ref()
+                        .unwrap()
+                        .swap_buffers(self.gl_context.as_ref().unwrap())
+                        .unwrap();
                 }
                 window.request_redraw();
             }
             _ => {
-                self.platform.handle_event::<()>(self.imgui.io_mut(), window, &Event::WindowEvent { window_id: _id, event });
+                self.platform.handle_event::<()>(
+                    self.imgui.io_mut(),
+                    window,
+                    &Event::WindowEvent {
+                        window_id: _id,
+                        event,
+                    },
+                );
             }
         }
     }

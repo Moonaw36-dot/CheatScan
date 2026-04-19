@@ -1,14 +1,14 @@
-use jwalk::WalkDir;
-use rayon::prelude::*;
-use pelite::FileMap;
-use pelite::pe32::{Pe as Pe32};
-use pelite::pe64::{Pe as Pe64};
 use crate::ImportanceEnum::ImportanceEnum;
 use crate::Structs::ScanResult;
-use sha2::{Sha256, Digest};
+use jwalk::WalkDir;
+use pelite::FileMap;
+use pelite::pe32::Pe as Pe32;
+use pelite::pe64::Pe as Pe64;
+use rayon::prelude::*;
+use sha2::{Digest, Sha256};
 use std::collections::HashSet;
 use std::fs::File;
-use std::io::{Read, BufReader};
+use std::io::{BufReader, Read};
 use std::sync::{Arc, Mutex};
 
 fn get_file_hash(path: &std::path::Path) -> String {
@@ -18,7 +18,9 @@ fn get_file_hash(path: &std::path::Path) -> String {
         let mut hasher = Sha256::new();
         let mut buffer = [0u8; 8192];
         while let Ok(count) = reader.read(&mut buffer) {
-            if count == 0 { break; }
+            if count == 0 {
+                break;
+            }
             hasher.update(&buffer[..count]);
         }
         return hex::encode(hasher.finalize());
@@ -39,32 +41,83 @@ fn get_original_filename(path: &std::path::Path) -> Option<String> {
     }?;
 
     let version_info = resources.version_info().ok()?;
-    
+
     let mut original_filename = None;
-    
+
     for &lang in version_info.translation() {
         version_info.strings(lang, |key: &str, value: &str| {
             if key == "OriginalFilename" {
                 original_filename = Some(value.to_string());
             }
         });
-        if original_filename.is_some() { break; }
+        if original_filename.is_some() {
+            break;
+        }
     }
-    
+
     original_filename
 }
 
-pub fn find_suspicious_dlls(plugins_path: &str, full_disk: bool, progress: Arc<Mutex<f32>>) -> Vec<ScanResult> {
+pub fn find_suspicious_dlls(
+    plugins_path: &str,
+    full_disk: bool,
+    progress: Arc<Mutex<f32>>,
+) -> Vec<ScanResult> {
     let all_suspicious = [
-        "iis_Stupid_Menu", "ColossalCheatMenu", "CCM", "Slider", "Preds", "WallWalk",
-        "ModMenu", "CheatMenu", "Skid", "Pull", "PSA", "Malachis", "Mod Menu",
-        "Cheat Menu", "Comp Gui", "Comp Cheat", "arms", "Zybers", "Speed Boost",
-        "Boost", "Quest Menu", "Fake Quest", "Pigeito", "LongArms", "Tag Reach",
-        "Tag fix", "Ventern", "Goobas", "Mintys", "Velmax", "Velocity",
-        "Seralyth", "Soduim", "Spoofer", "pull cap", "Comp ", "external", "Predictions",
-        "wyvldr", "5cintill4", "inject", "cheat", "hack", "sharpmono", "bypass", "smi",
-        "trainer", "loader", "injector", "parallex", "extremeinjector", "scintilla",
-        "intellect", "IntellectFree"
+        "iis_Stupid_Menu",
+        "ColossalCheatMenu",
+        "CCM",
+        "Slider",
+        "Preds",
+        "WallWalk",
+        "ModMenu",
+        "CheatMenu",
+        "Skid",
+        "Pull",
+        "PSA",
+        "Malachis",
+        "Mod Menu",
+        "Cheat Menu",
+        "Comp Gui",
+        "Comp Cheat",
+        "arms",
+        "Zybers",
+        "Speed Boost",
+        "Boost",
+        "Quest Menu",
+        "Fake Quest",
+        "Pigeito",
+        "LongArms",
+        "Tag Reach",
+        "Tag fix",
+        "Ventern",
+        "Goobas",
+        "Mintys",
+        "Velmax",
+        "Velocity",
+        "Seralyth",
+        "Soduim",
+        "Spoofer",
+        "pull cap",
+        "Comp ",
+        "external",
+        "Predictions",
+        "wyvldr",
+        "5cintill4",
+        "inject",
+        "cheat",
+        "hack",
+        "sharpmono",
+        "bypass",
+        "smi",
+        "trainer",
+        "loader",
+        "injector",
+        "parallex",
+        "extremeinjector",
+        "scintilla",
+        "intellect",
+        "IntellectFree",
     ];
 
     let safe_hashes: HashSet<String> = [
@@ -85,16 +138,22 @@ pub fn find_suspicious_dlls(plugins_path: &str, full_disk: bool, progress: Arc<M
         "a04fedf08f7c81f5d01aba6f2840a7ffce50b79bbd24587d8dbe69ab73971d29",
         "d1f02fc3ada3a13da307de421225bfe56ebe24064370980979391c4be021672f",
         "33275b2783b7b99495a02c098ee86d6a9a2783e884a5c9369021f20c94cf99e7",
-        "54887808960d156550b37d602d08847607aa9e908d039f2765fb0b5e79394aa4"
-    ].into_iter().map(String::from).collect();
+        "54887808960d156550b37d602d08847607aa9e908d039f2765fb0b5e79394aa4",
+    ]
+    .into_iter()
+    .map(String::from)
+    .collect();
 
     let malicious_hashes: HashSet<String> = [
         "ea0df233a20070c7aeec60bfb8b9ce0c42ac809640b5da68ccf7619656a35e9e",
-        "7a7261eae09358decff8653ebda60fa87bb98d6672d2bff422d1c2143cc34b8c"
-    ].into_iter().map(String::from).collect();
+        "7a7261eae09358decff8653ebda60fa87bb98d6672d2bff422d1c2143cc34b8c",
+    ]
+    .into_iter()
+    .map(String::from)
+    .collect();
 
     let mut paths_to_scan = vec![plugins_path.to_string()];
-    
+
     if full_disk {
         #[cfg(target_os = "windows")]
         paths_to_scan.push("C:\\".to_string());
@@ -115,70 +174,78 @@ pub fn find_suspicious_dlls(plugins_path: &str, full_disk: bool, progress: Arc<M
         }
     }
 
-    let results = paths_to_scan.into_par_iter().flat_map(|path| {
-        let mut found_files = Vec::new();
-        let _is_plugins_folder = path == plugins_path;
+    let results = paths_to_scan
+        .into_par_iter()
+        .flat_map(|path| {
+            let mut found_files = Vec::new();
+            let _is_plugins_folder = path == plugins_path;
 
-        if !path.is_empty() && std::path::Path::new(&path).exists() {
-            let entries: Vec<_> = WalkDir::new(path).into_iter().filter_map(|e| e.ok()).collect();
-            let total_entries = entries.len();
-            
-            for (i, entry) in entries.into_iter().enumerate() {
-                if i % 100 == 0 {
-                    if let Ok(mut p) = progress.lock() {
-                        *p = (i as f32 / total_entries as f32).min(0.95);
-                    }
-                }
-                
-                let path = entry.path();
-                let file_name = entry.file_name.to_string_lossy();
-                let is_dll = file_name.ends_with(".dll");
-                let is_exe = file_name.ends_with(".exe");
+            if !path.is_empty() && std::path::Path::new(&path).exists() {
+                let entries: Vec<_> = WalkDir::new(path)
+                    .into_iter()
+                    .filter_map(|e| e.ok())
+                    .collect();
+                let total_entries = entries.len();
 
-                if is_dll || is_exe {
-                    let file_hash = get_file_hash(&path);
-                    
-                    // 1. Known safe hash
-                    if safe_hashes.contains(&file_hash) {
-                        continue;
-                    }
-                    
-                    let mut is_suspicious = false;
-
-                    // 2. Known malicious hash
-                    if malicious_hashes.contains(&file_hash) {
-                        is_suspicious = true;
-                    }
-                    
-                    // 3. Check filename
-                    if !is_suspicious && all_suspicious.iter().any(|&name| file_name.contains(name)) {
-                        is_suspicious = true;
-                    }
-
-                    // 4. Check metadata
-                    if !is_suspicious {
-                        if let Some(check_name) = get_original_filename(&path) {
-                            if all_suspicious.iter().any(|&name| check_name.contains(name)) {
-                                is_suspicious = true;
-                            }
+                for (i, entry) in entries.into_iter().enumerate() {
+                    if i % 100 == 0 {
+                        if let Ok(mut p) = progress.lock() {
+                            *p = (i as f32 / total_entries as f32).min(0.95);
                         }
                     }
 
-                    if is_suspicious {
-                        found_files.push(ScanResult {
-                            file_name: file_name.to_string(),
-                            importance: ImportanceEnum::CheatMenu,
-                        });
+                    let path = entry.path();
+                    let file_name = entry.file_name.to_string_lossy();
+                    let is_dll = file_name.ends_with(".dll");
+                    let is_exe = file_name.ends_with(".exe");
+
+                    if is_dll || is_exe {
+                        let file_hash = get_file_hash(&path);
+
+                        // 1. Known safe hash
+                        if safe_hashes.contains(&file_hash) {
+                            continue;
+                        }
+
+                        let mut is_suspicious = false;
+
+                        // 2. Known malicious hash
+                        if malicious_hashes.contains(&file_hash) {
+                            is_suspicious = true;
+                        }
+
+                        // 3. Check filename
+                        if !is_suspicious
+                            && all_suspicious.iter().any(|&name| file_name.contains(name))
+                        {
+                            is_suspicious = true;
+                        }
+
+                        // 4. Check metadata
+                        if !is_suspicious {
+                            if let Some(check_name) = get_original_filename(&path) {
+                                if all_suspicious.iter().any(|&name| check_name.contains(name)) {
+                                    is_suspicious = true;
+                                }
+                            }
+                        }
+
+                        if is_suspicious {
+                            found_files.push(ScanResult {
+                                file_name: file_name.to_string(),
+                                importance: ImportanceEnum::CheatMenu,
+                            });
+                        }
                     }
                 }
             }
-        }
-        found_files
-    }).collect();
+            found_files
+        })
+        .collect();
 
     if let Ok(mut p) = progress.lock() {
         *p = 1.0;
     }
-    
+
     results
 }

@@ -1,7 +1,7 @@
-use imgui::Ui;
-use std::sync::mpsc::{channel, Receiver};
-use crate::Structs::{Settings, ScanResult};
+use crate::Structs::{ScanResult, Settings};
 use crate::checker::find_suspicious_dlls;
+use imgui::Ui;
+use std::sync::mpsc::{Receiver, channel};
 
 pub struct Tab1 {
     pub receiver: std::sync::Arc<std::sync::Mutex<Option<Receiver<Vec<ScanResult>>>>>,
@@ -30,7 +30,9 @@ impl Tab1 {
                 if let Ok(results) = rx.try_recv() {
                     settings.scan_results = results;
                     *rx_guard = None; // Reset
-                    if let Ok(mut s) = self.is_scanning.lock() { *s = false; }
+                    if let Ok(mut s) = self.is_scanning.lock() {
+                        *s = false;
+                    }
                 }
             }
         }
@@ -38,7 +40,10 @@ impl Tab1 {
         if ui.button("Begin scanning") {
             let bepinex_path = std::path::Path::new(&settings.bepinex_path);
             if !settings.full_disk_scan && (!bepinex_path.exists() || !bepinex_path.is_dir()) {
-                self.warning_message = Some("Please enable Full Disk Scan or select a valid BepInEx/Gorilla Tag path.".to_string());
+                self.warning_message = Some(
+                    "Please enable Full Disk Scan or select a valid BepInEx/Gorilla Tag path."
+                        .to_string(),
+                );
             } else {
                 self.warning_message = None;
                 let bepinex_path_str = settings.bepinex_path.clone();
@@ -49,13 +54,19 @@ impl Tab1 {
                 if let Ok(mut rx_guard) = self.receiver.lock() {
                     *rx_guard = Some(rx);
                 }
-                if let Ok(mut s) = self.is_scanning.lock() { 
-                    *s = true; 
-                    if let Ok(mut p) = self.progress.lock() { *p = 0.0; }
+                if let Ok(mut s) = self.is_scanning.lock() {
+                    *s = true;
+                    if let Ok(mut p) = self.progress.lock() {
+                        *p = 0.0;
+                    }
                 }
 
                 std::thread::spawn(move || {
-                    let results = find_suspicious_dlls(&bepinex_path_str.to_string_lossy(), full_disk, progress);
+                    let results = find_suspicious_dlls(
+                        &bepinex_path_str.to_string_lossy(),
+                        full_disk,
+                        progress,
+                    );
                     let _ = tx.send(results);
                 });
             }
